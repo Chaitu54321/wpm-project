@@ -9,7 +9,7 @@
     .card { background:white; padding:20px; border-radius:10px; width:340px; box-shadow:0 4px 12px rgba(0,0,0,.1); }
     h2 { margin-top:0; }
     input, button { width:100%; margin:8px 0; padding:10px; border-radius:6px; border:1px solid #ccc; font-size:15px; }
-    button { background:#2563eb; color:white; border:none; cursor:pointer; }
+    button { background:red; color:white; border:none; cursor:pointer; }
     button:hover { opacity:.9; }
     .result, .history { margin-top:12px; padding:10px; background:#f1f5f9; border-radius:6px; }
     .history { max-height:120px; overflow:auto; font-size:14px; }
@@ -26,38 +26,50 @@
     <div class="history" id="history"></div>
   </div>
 
-  <script>
-    const form = document.getElementById("calc-form");
-    const exprInput = document.getElementById("expr");
-    const resultDiv = document.getElementById("result");
-    const historyDiv = document.getElementById("history");
+<script>
+  const form = document.getElementById("calc-form");
+  const exprInput = document.getElementById("expr");
+  const resultDiv = document.getElementById("result");
+  const historyDiv = document.getElementById("history");
 
-    function addHistory(text) {
-      const div = document.createElement("div");
-      div.textContent = text;
-      historyDiv.prepend(div);
-    }
+  function addHistory(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    historyDiv.prepend(div);
+  }
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const expr = exprInput.value.trim();
-      if (!expr) return;
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const expr = exprInput.value.trim();
+    if (!expr) return;
 
-      resultDiv.textContent = "Calculating…";
+    resultDiv.textContent = "Calculating…";
 
-      try {
-        const res = await fetch(`/api/eval?expr=${encodeURIComponent(expr)}`);
-        const data = await res.json();
-        if (!res.ok) {
-          resultDiv.textContent = "Error: " + (data.error || "Unknown error");
-          return;
-        }
-        resultDiv.textContent = `${data.expr} = ${data.result}`;
-        addHistory(`${data.expr} = ${data.result}`);
-      } catch (err) {
-        resultDiv.textContent = "Network error";
+    try {
+      const res = await fetch(`/api/eval?expr=${encodeURIComponent(expr)}`);
+      const data = await res.json();
+      if (!res.ok) {
+        resultDiv.textContent = "Error: " + (data.error || "Unknown error");
+        return;
       }
-    });
-  </script>
+      resultDiv.textContent = `${data.expr} = ${data.result}`;
+      addHistory(`${data.expr} = ${data.result}`);
+    } catch (err) {
+      resultDiv.textContent = "Network error";
+    }
+  });
+
+  // 🧾 Fetch calculation history from MongoDB
+  async function loadHistory() {
+    const res = await fetch("/api/history");
+    const data = await res.json();
+    historyDiv.innerHTML = "";
+    data.forEach(item => addHistory(`${item.expr} = ${item.result}`));
+  }
+
+  // Load history on page load
+  window.onload = loadHistory;
+</script>
+
 </body>
 </html>
